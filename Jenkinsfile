@@ -30,9 +30,19 @@ pipeline {
                     bat 'git config --global user.name "Your Name"'
                     bat 'git config --global user.email "your_email@example.com"'
 
-                    // Add the changes and commit
-                    bat 'git add .'
-                    bat 'git commit -m "Update Jenkinsfile"'
+
+                    // Check the current status of the Git workspace
+                    bat 'git status'
+                    
+                    // Stage changes if any exist
+                    bat '''
+                    git add .
+                    if git diff --cached --quiet; then
+                    echo "No changes to commit"
+                    exit 0
+                    fi
+                    git commit -m "Update Jenkinsfile"
+                    '''
 
                     // Push changes to GitHub
                     bat 'git push https://github.com/Ahmedamira22/reactApp-ci-cd.git main'
