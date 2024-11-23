@@ -1,22 +1,51 @@
 pipeline {
-    agent any
+    agent {
+        docker { image 'node:18' }
+    }
+    environment {
+        DOCKER_IMAGE = 'ahmedamira22/react-app:latest'
+    }
     stages {
-        stage('Docker Login') {
+        stage('Checkout Code') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    '''
+                git branch: 'main', url: 'https://github.com/Ahmedamira22/reactApp-ci-cd.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Build React App') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("$DOCKER_IMAGE")
                 }
             }
         }
-        stage('Build & Push Dockerfile') {
+        stage('Push Docker Image') {
             steps {
-                sh '''
-                cd Simple-Project/
-                ansible-playbook ansible-playbook.yml
-                '''
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
+                        docker.image("$DOCKER_IMAGE").push()
+                    }
+                }
             }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploy step can be added here'
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
