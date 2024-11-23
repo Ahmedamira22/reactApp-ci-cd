@@ -24,6 +24,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Build the Docker image with the specified tag
                     docker.build("$DOCKER_IMAGE")
                 }
             }
@@ -31,6 +32,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
+                    // Use Docker Hub credentials to push the image to Docker Hub
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
                         docker.image("$DOCKER_IMAGE").push()
                     }
@@ -45,6 +47,7 @@ pipeline {
     }
     post {
         always {
+            // Clean up workspace after the build
             cleanWs()
         }
     }
