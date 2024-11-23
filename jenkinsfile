@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = 'ahmedamira22/react-app:latest' // Update with your Docker Hub image name and tag
+    }
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning the repository'
+                git branch: 'main', url: 'https://github.com/Ahmedamira22/reactApp-ci-cd.git'
+            }
+        }
+
+        stage('Test Docker') {
+            steps {
+                echo 'Testing Docker installation'
+                bat 'docker --version'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing npm dependencies'
+                bat 'npm install'
+            }
+        }
+
+        stage('Build Project') {
+            steps {
+                echo 'Building the React project'
+                bat 'npm run build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building the Docker image'
+                bat """
+                docker build -t %DOCKER_IMAGE% .
+                """
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Pushing the Docker image to Docker Hub'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat """
+                        docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                        docker push %DOCKER_IMAGE%
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to the test environment'
+                bat """
+                docker run -d -p 3000:80 %DOCKER_IMAGE%
+                """
+            }
+        }
+        
+        
+
+
+
+    }
+}
