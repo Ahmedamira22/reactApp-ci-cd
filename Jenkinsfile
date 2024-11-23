@@ -1,53 +1,23 @@
 pipeline {
     agent any
-    tools {
-        nodejs 'nodejs'  // Ensure Node.js is installed on the Jenkins agent
-    }
 
+    environment {
+		DOCKERHUB_CREDENTIALS=credentials('dockerhub')
+	}
     stages {
-        stage('Git Checkout') {
+        stage('Docker Login') {
             steps {
-                git url: "https://github.com/Ahmedamira22/reactApp-ci-cd", branch: "main"
+                // Add --password-stdin to run docker login command non-interactively
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
             }
         }
-
-        stage('NPM Install') {
+        stage('Build & push Dockerfile') {
             steps {
-                bat "npm install"
+                sh """
+                cd Simple-Project/
+                ansible-playbook ansible-playbook.yml
+                """
             }
         }
-        
-        stage('Node Build') {
-            steps {
-                bat "npm run build"
-            }
-        }
-        
-        stage('Push to GitHub') {
-            steps {
-                script {
-                    // Configure Git user details
-                    bat 'git config --global user.name "Your Name"'
-                    bat 'git config --global user.email "your_email@example.com"'
-
-
-                    // Check the current status of the Git workspace
-                    bat 'git status'
-                    
-                    // Stage changes if any exist
-                    bat '''
-                    git add .
-                    if git diff --cached --quiet; then
-                    echo "No changes to commit"
-                    exit 0
-                    fi
-                    git commit -m "Update Jenkinsfile"
-                    '''
-
-                    // Push changes to GitHub
-                    bat 'git push https://github.com/Ahmedamira22/reactApp-ci-cd.git main'
-                }
-            }
-        }
-    }
+    } 
 }
