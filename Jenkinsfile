@@ -4,6 +4,7 @@ pipeline {
     }
     environment {
         DOCKER_IMAGE = 'ahmedamira22/react-app:latest'
+        WORKSPACE_UNIX = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
     }
     stages {
         stage('Checkout Code') {
@@ -28,7 +29,7 @@ pipeline {
             steps {
                 echo "Building Docker image"
                 script {
-                    docker.build("$DOCKER_IMAGE")
+                    docker.build("$DOCKER_IMAGE", ".")
                 }
             }
         }
@@ -48,5 +49,4 @@ pipeline {
             }
         }
     }
-   
 }
